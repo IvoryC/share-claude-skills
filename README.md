@@ -2,19 +2,21 @@
 
 This directory is a git-controled directory for skills developed for Claude.
 
-## What's here:
+## What's here
 
+```
 share-claude-skills
 ├── README.md
 └── skills
     ├── build-q2-pluggins
-    │   └── SKILL.md
+    │   └── SKILL.md
     └── when-am-i
         ├── deadlines.md
         ├── references
-        │   ├── calendar-context.md
-        │   └── milestones.md
+        │   ├── calendar-context.md
+        │   └── milestones.md
         └── SKILL.md
+```
 
 ## Use These Skills
 
