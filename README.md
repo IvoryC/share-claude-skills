@@ -37,6 +37,23 @@ ln -s $PWD/skill/some-skill-2 ~/.claude/skills/some-skill-2
 Option 1 is recommended for a repository that you maintain individually to for your personal collection.
 Option 2 is recommended for a shared repository where other people may add skills that you only selectively want to give to Claude.
 
+## Where Claude Looks for Skills
+
+| Location   | Path                                              | Applies to                      | How many? |
+|:-----------|:--------------------------------------------------|:--------------------------------|:----------|
+| Enterprise | managed settings                                  | All users in your organization  | One       |
+| Personal   | `~/.claude/skills/<skill-name>/SKILL.md`          | All your projects               | One       |
+| Project    | `.claude/skills/<skill-name>/SKILL.md`            | This project only               | Many      |
+| Plugin     | `<plugin>/skills/<skill-name>/SKILL.md`           | Where plugin is enabled         | Many      |
+
+When skills share the same name across levels, higher-priority locations win: **enterprise > personal > project**. Plugin skills are namespaced as `plugin-name:skill-name` so they can never conflict with other levels.
+
+**Personal** skills live in exactly one place: `~/.claude/skills/`. There is only one such folder per user.
+
+**Project** skills are not limited to the repo root. Claude discovers `.claude/skills/` at the directory where you launched `claude`, and also in any subdirectory you're actively working in. In a monorepo, `packages/frontend/.claude/skills/` is loaded automatically when you're editing files under `packages/frontend/`. There can be many `.claude/skills/` locations within a single project.
+
+**Plugin** skills are namespaced and isolated per plugin. Each installed plugin contributes its own `skills/` directory. You can have any number of plugins active at once, each adding their own skills without conflicting.
+
 ## Notes
 
 ### Potential gotchas
