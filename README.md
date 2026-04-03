@@ -1,0 +1,52 @@
+# my-claude-skills
+
+This directory is a git-controled directory for skills Ivory has developed for Claude.
+
+To use these as your person Claude skills, link your ~/.claude/skills directory to this one.  Alternatively, link individual skill folders to use select skills from this set while keeping your own local set not in this repo.
+
+To use the whole folder wholesale:
+```bash
+ln -s $PWD/skills ~/.claude/skills
+```
+Replace $PWD with the path to this repo or run command from this folder.
+
+To use individual skills:
+```bash
+ln -s $PWD/skills/some-skill-1 ~/.claude/skills/some-skill-1
+ln -s $PWD/skill/some-skill-2 ~/.claude/skills/some-skill-2
+...
+```
+
+**Potential gotchas:**
+(provided by Claude.ai)
+
+- The `--add-dir` flag grants file access rather than configuration discovery, but skills are an exception: `.claude/skills/` within an added directory is loaded automatically and picked up by live change detection, so you can edit those skills during a session without restarting.  The question is whether live change detection follows symlinks — it likely does on most systems, but worth testing.
+
+- If you symlink the *entire* `~/.claude/skills` directory (option 1), make sure the repo root structure matches what Claude Code expects — i.e., each skill is a subdirectory with a `SKILL.md` inside.
+
+- On macOS, symlinks are followed normally by most tools. On some Linux setups with `inotify`-based watchers, symlink traversal can occasionally behave unexpectedly, but it's rarely a problem in practice.
+
+
+**Front Matter for skills**
+
+https://code.claude.com/docs/en/skills.md — "Frontmatter reference" section
+
+This is still a changing ecosystem. Do not treat this as a comprehensive list.
+
+| Field | Type | Description |
+|---|---|---|
+| `name` | string | **REQUIRED** Skill identifier (should match directory name) |
+| `description` | string | **REQUIRED** Trigger conditions (model-invoked) or `/help` text (user-invoked) |
+| `version` | string | __for humans__ Semantic version, e.g. `1.0.0` |
+| `argument-hint` | string | Shown to user, e.g. `<required> [optional]` |
+| `allowed-tools` | list | Pre-approved tools, reduces permission prompts |
+| `model` | string | Override model: `haiku`, `sonnet`, `opus` |
+| `disable-model-invocation` | bool | `true` = user-only (for skills with side effects) |
+| `user-invocable` | bool | `false` = Claude-only (background knowledge) |
+| `context` | string | `fork` = run in isolated subagent |
+| `agent` | string | Which agent type when forked (e.g. `Explore`) |
+
+Other front matter fields are ignored.
+When no `allowed-tools` are given, the skills has the same tool permissions has the main conversation.
+By default, the skill is invokable by the main conversation (disable-model-invocation: false) when Claude 
+thinks the current task matches the `description` and invokable by the user as a /command (user-invocable: true).
