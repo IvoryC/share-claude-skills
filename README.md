@@ -1,24 +1,45 @@
-# my-claude-skills
+# Lets Share some Claude Skills
 
-This directory is a git-controled directory for skills Ivory has developed for Claude.
+This directory is a git-controled directory for skills developed for Claude.
+
+## What's here:
+
+share-claude-skills
+├── README.md
+└── skills
+    ├── build-q2-pluggins
+    │   └── SKILL.md
+    └── when-am-i
+        ├── deadlines.md
+        ├── references
+        │   ├── calendar-context.md
+        │   └── milestones.md
+        └── SKILL.md
+
+## Use These Skills
 
 To use these as your person Claude skills, link your ~/.claude/skills directory to this one.  Alternatively, link individual skill folders to use select skills from this set while keeping your own local set not in this repo.
 
-To use the whole folder wholesale:
+**Option 1:** To use the whole folder wholesale:
 ```bash
 ln -s $PWD/skills ~/.claude/skills
 ```
 Replace $PWD with the path to this repo or run command from this folder.
 
-To use individual skills:
+**Option 2:** To use individual skills:
 ```bash
 ln -s $PWD/skills/some-skill-1 ~/.claude/skills/some-skill-1
 ln -s $PWD/skill/some-skill-2 ~/.claude/skills/some-skill-2
 ...
 ```
+Option 1 is recommended for a repository that you maintain individually to for your personal collection.
+Option 2 is recommended for a shared repository where other people may add skills that you only selectively want to give to Claude.
 
-**Potential gotchas:**
-(provided by Claude.ai)
+## Notes
+
+### Potential gotchas
+
+__provided by Claude.ai__
 
 - The `--add-dir` flag grants file access rather than configuration discovery, but skills are an exception: `.claude/skills/` within an added directory is loaded automatically and picked up by live change detection, so you can edit those skills during a session without restarting.  The question is whether live change detection follows symlinks — it likely does on most systems, but worth testing.
 
@@ -27,7 +48,7 @@ ln -s $PWD/skill/some-skill-2 ~/.claude/skills/some-skill-2
 - On macOS, symlinks are followed normally by most tools. On some Linux setups with `inotify`-based watchers, symlink traversal can occasionally behave unexpectedly, but it's rarely a problem in practice.
 
 
-**Front Matter for skills**
+### Front Matter for skills
 
 https://code.claude.com/docs/en/skills.md — "Frontmatter reference" section
 
