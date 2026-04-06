@@ -1,165 +1,273 @@
 ---
-name: build-q2-pliggins
-description: Create a qiime2 pluggin for a new tool or as a wrapper to an existing tool to operate in the qiime2 ecosystem and track provenance.
-version: 1.0.0
-user-invocable: false
+name: build-q2-pluggins
+description: Create a qiime2 plugin for a new tool or as a wrapper to an existing tool to operate in the qiime2 ecosystem and track provenance.
+version: 2.0.0
+user-invocable: true
 ---
 
-# How to Build QIIME 2 Plugins
+# Building QIIME 2 Plugins
 
-Notes for Claude Code on building QIIME 2 plugins in this lab environment.
+> **Documentation note:** QIIME 2 is actively developed and some older docs are flagged as outdated. Always refer to [develop.qiime2.org](https://develop.qiime2.org/en/latest/) for current guidance. The canonical book is *Developing with QIIME 2* by Caporaso and Bolyen.
 
-## Template
+## Quick Start: Create from Template
 
-Start from the official template:
-https://develop.qiime2.org/en/stable/plugins/tutorials/create-from-template.html
+The fastest path to a new plugin is the official Copier template maintained by the Caporaso Lab:
 
-Reference plugin in this lab: `/projects/afodor_research2/ieclabau/privateGit/q2-bridges`
+```bash
+# Install pipx and copier if needed
+pip install pipx
+pipx install copier
 
-## Repo Structure
-
-```
-q2_PLUGINNAME/
-├── __init__.py          # just version import, don't touch
-├── _methods.py          # Python implementations of all actions
-├── plugin_setup.py      # registers actions with QIIME 2 type system
-├── citations.bib        # BibTeX for citations
-└── tests/
-    ├── __init__.py
-    ├── test_methods.py
-    └── data/            # small fixtures for unit tests
-pyproject.toml           # entry point: q2_PLUGINNAME.plugin_setup:plugin
-Makefile                 # make test / make dev / make lint
-environment-files/       # conda env YAMLs
+# Generate your plugin scaffold
+copier copy https://github.com/caporaso-lab/plugin-template.git .
 ```
 
-## Key Conventions
+Copier will prompt for your plugin name, target distribution, and other metadata. Follow the generated `README.md` for installation steps.
 
-### Function signatures in `_methods.py`
+- Official template: [caporaso-lab/plugin-template](https://github.com/caporaso-lab/plugin-template)
+- Step-by-step tutorial: [develop.qiime2.org — Create from template](https://develop.qiime2.org/en/stable/plugins/tutorials/create-from-template.html)
 
-- QIIME 2 calls your Python function with **format objects**, not semantic types.
-- Return `pd.DataFrame` for `FeatureTable[Frequency]` — QIIME 2 transformers handle BIOM conversion.
-- Return `DNASequencesDirectoryFormat` for `FeatureData[Sequence]`.
-- QIIME 2 semantic type → Python format class mappings:
+---
 
-| Semantic type | Python format class |
+## Repository Structure
+
+See [→ references/package-structure.md](references/package-structure.md) for a detailed breakdown.
+
+Conventional layout:
+
+```
+q2-pluginname/
+├── q2_pluginname/
+│   ├── __init__.py          # version import only
+│   ├── _methods.py          # Python implementations of all actions
+│   ├── _visualizers.py      # Visualizer implementations (produce index.html)
+│   ├── plugin_setup.py      # instantiates Plugin; registers actions, types, formats
+│   ├── citations.bib        # BibTeX entries referenced in registration
+│   └── tests/
+│       ├── __init__.py
+│       ├── test_methods.py
+│       └── data/            # small fixture files for unit tests
+├── pyproject.toml           # entry point: q2_pluginname.plugin_setup:plugin
+├── Makefile                 # make test / make dev / make lint
+└── environment-files/       # conda YAML files for reproducible envs
+```
+
+The `pyproject.toml` entry point that makes QIIME 2 discover your plugin:
+
+```toml
+[project.entry-points."qiime2.plugins"]
+"q2-pluginname" = "q2_pluginname.plugin_setup:plugin"
+```
+
+---
+
+## The Type System
+
+See [→ references/type-system.md](references/type-system.md) for a full reference.
+
+QIIME 2 has two kinds of types:
+- **Semantic types** — what an artifact *represents* (e.g., `FeatureTable[Frequency]`)
+- **Primitive types** — plain Python values passed as parameters (e.g., `Int`, `Float`, `Str`)
+
+Key semantic type → Python format class mappings for common amplicon work:
+
+| Semantic type | Python format / return type |
 |---|---|
-| `SampleData[JoinedSequencesWithQuality]` | `SingleLanePerSampleSingleEndFastqDirFmt` |
-| `SampleData[SequencesWithQuality]` | `SingleLanePerSampleSingleEndFastqDirFmt` |
-| `FeatureTable[Frequency]` | `pd.DataFrame` (samples × features) |
+| `FeatureTable[Frequency]` | `pd.DataFrame` (samples × features, raw counts) |
 | `FeatureData[Sequence]` | `DNASequencesDirectoryFormat` |
-| `FeatureData[Taxonomy]` | `pd.DataFrame` (Feature ID index, Taxon + Confidence columns) |
+| `FeatureData[Taxonomy]` | `pd.DataFrame` (Feature ID index; Taxon + Confidence cols) |
+| `SampleData[SequencesWithQuality]` | `SingleLanePerSampleSingleEndFastqDirFmt` |
+| `SampleData[JoinedSequencesWithQuality]` | `SingleLanePerSampleSingleEndFastqDirFmt` |
+| `SampleData[PairedEndSequencesWithQuality]` | `SingleLanePerSamplePairedEndFastqDirFmt` |
+| `Phylogeny[Unrooted]` | `NewickFormat` |
+| `DistanceMatrix` | `skbio.DistanceMatrix` |
 
-### Writing `DNASequencesDirectoryFormat`
+QIIME 2 **transformers** handle the conversion between format objects and Python types — you do not call them directly.
 
-```python
-from q2_types.feature_data import DNASequencesDirectoryFormat, DNAFASTAFormat
+---
 
-result = DNASequencesDirectoryFormat()
-ff = DNAFASTAFormat()
-shutil.copy(src_fasta_path, str(ff))          # or write content via ff.open()
-result.file.write_data(ff, DNAFASTAFormat)
-return result
-```
+## Registering Actions
 
-### Reading from `SingleLanePerSampleSingleEndFastqDirFmt`
+See [→ references/action-registration.md](references/action-registration.md) for complete examples.
 
-```python
-manifest = sequences.manifest.view(pd.DataFrame)
-for sample_id in manifest.index:
-    src = manifest.loc[sample_id, 'forward']  # path to .fastq.gz
-```
-
-### `plugin_setup.py` imports
+### Plugin object (`plugin_setup.py`)
 
 ```python
-from qiime2.plugin import Citations, Float, Int, Plugin, Range, TypeMatch
-from q2_types.sample_data import SampleData
-from q2_types.feature_table import FeatureTable, Frequency
-from q2_types.feature_data import FeatureData, Sequence, Taxonomy
-from q2_types.per_sample_sequences import (
-    JoinedSequencesWithQuality, SequencesWithQuality
+from qiime2.plugin import Plugin, Citations
+import q2_pluginname
+
+citations = Citations.load('citations.bib', package='q2_pluginname')
+
+plugin = Plugin(
+    name='pluginname',
+    version=q2_pluginname.__version__,
+    website='https://github.com/yourorg/q2-pluginname',
+    package='q2_pluginname',
+    description='One-sentence description.',
+    short_description='Short description.',
 )
 ```
 
-### Registering a method
+### Registering a Method
 
 ```python
+from qiime2.plugin import Int, Float, Range
+from q2_types.feature_table import FeatureTable, Frequency
+from q2_types.feature_data import FeatureData, Sequence
+
 plugin.methods.register_function(
     function=my_func,
-    inputs={'sequences': SampleData[JoinedSequencesWithQuality]},
+    inputs={
+        'table': FeatureTable[Frequency],
+    },
     parameters={
-        'threshold': Int % Range(1, None),
-        'fdr': Float % Range(0.0, 1.0, inclusive_start=False, inclusive_end=False),
+        'n_threads': Int % Range(1, None),
+        'min_frequency': Float % Range(0.0, 1.0),
     },
     outputs=[
-        ('table', FeatureTable[Frequency]),
+        ('filtered_table', FeatureTable[Frequency]),
         ('representative_sequences', FeatureData[Sequence]),
     ],
+    input_descriptions={'table': 'The feature table to process.'},
+    parameter_descriptions={
+        'n_threads': 'Number of threads to use.',
+        'min_frequency': 'Minimum relative frequency cutoff.',
+    },
+    output_descriptions={
+        'filtered_table': 'Filtered feature table.',
+        'representative_sequences': 'Representative sequences.',
+    },
+    name='My Method',
+    description='Longer description of what this method does.',
+    citations=[citations['AuthorYYYY']],
+)
+```
+
+Use `TypeMatch` to accept multiple related types:
+
+```python
+from qiime2.plugin import TypeMatch
+T = TypeMatch([SequencesWithQuality, JoinedSequencesWithQuality])
+inputs = {'sequences': SampleData[T]}
+```
+
+### Registering a Visualizer
+
+Visualizers produce a `Visualization` (an `index.html` + assets). They have **no** `outputs` or `output_descriptions` parameters:
+
+```python
+plugin.visualizers.register_function(
+    function=my_visualizer,
+    inputs={'table': FeatureTable[Frequency]},
+    parameters={},
+    input_descriptions={},
+    parameter_descriptions={},
+    name='My Visualizer',
+    description='Creates an interactive summary.',
+)
+```
+
+### Registering a Pipeline
+
+Pipelines chain Methods and Visualizers. Citations from underlying actions are inherited automatically:
+
+```python
+plugin.pipelines.register_function(
+    function=my_pipeline,
+    inputs={...},
+    parameters={...},
+    outputs=[...],
     input_descriptions={...},
     parameter_descriptions={...},
     output_descriptions={...},
-    name='Human-readable name',
-    description='Long description...',
-    citations=[citations['MyKey']]
+    name='My Pipeline',
+    description='End-to-end workflow.',
 )
 ```
 
-Use `TypeMatch` when a function accepts multiple related types:
-```python
-T = TypeMatch([SequencesWithQuality, JoinedSequencesWithQuality])
-inputs={'sequences': SampleData[T]}
-```
+Official how-to guides:
+- [Create and register a Method](https://develop.qiime2.org/en/latest/plugins/how-to-guides/create-register-method.html)
+- [Create and register a Visualizer](https://develop.qiime2.org/en/latest/plugins/how-to-guides/create-register-visualizer.html)
+- [Create and register a Pipeline](https://develop.qiime2.org/en/latest/plugins/how-to-guides/create-register-pipeline.html)
+
+---
 
 ## Testing
 
-- Use `TestPluginBase` from `qiime2.plugin.testing`.
-- Set `package = 'q2_PLUGINNAME.tests'` so `self.get_data_path('file.txt')` resolves to `tests/data/`.
-- Use `qiime2.plugin.util.transform` to convert fixture files to Python objects.
-- Skip integration tests that need external tools:
-  ```python
-  @unittest.skipUnless(tool_available(), 'tool not installed')
-  class MyIntegrationTests(TestPluginBase): ...
-  ```
-
-## Calling External Tools (R, Java, etc.)
+See [→ references/testing.md](references/testing.md) for patterns and examples.
 
 ```python
-proc = subprocess.run(
-    ['Rscript', '--vanilla', '-e', r_script],
-    capture_output=True, text=True,
-)
-if proc.returncode != 0:
-    raise RuntimeError(
-        f'Tool failed (exit {proc.returncode}).\n'
-        f'STDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}'
-    )
+from qiime2.plugin.testing import TestPluginBase
+
+class MyTests(TestPluginBase):
+    package = 'q2_pluginname.tests'
+
+    def test_my_func(self):
+        fixture = self.get_data_path('fixture.tsv')  # resolves to tests/data/
+        # ...
 ```
 
-- Name temp files `{sample_id}.fastq.gz` so output tables use the same sample IDs as QIIME 2.
-- Construct all QIIME 2 format objects (e.g., `DNASequencesDirectoryFormat`) inside the `with tempfile.TemporaryDirectory()` block, before the cleanup.
-- Return values can be used after the `with` block exits because `pd.DataFrame` is in-memory and QIIME 2 format objects manage their own storage.
+Run tests:
+
+```bash
+make test          # or: py.test q2_pluginname/tests/
+```
+
+---
+
+## Calling External Tools
+
+See [→ references/external-tools.md](references/external-tools.md) for patterns when wrapping R, Java, or other CLI tools.
+
+---
 
 ## Development Workflow
 
 ```bash
-conda activate q2-hashseq-dev   # or the relevant env
-make dev                         # pip install -e .
-make test                        # py.test
-qiime dev refresh-cache          # make QIIME 2 CLI aware after changes
-qiime hashseq --help
+# One-time: install in editable mode
+make dev            # equivalent to: pip install -e .
+
+# After code changes
+make test           # run unit tests
+qiime dev refresh-cache    # update QIIME 2 CLI cache after changes to plugin_setup.py
+
+# Verify registration
+qiime pluginname --help
 ```
 
-## Plugins in This Lab
+Set up your environment:
+- [Set up your development environment](https://develop.qiime2.org/en/latest/plugins/how-to-guides/set-up-development-environment.html)
+- Use the **QIIME 2 amplicon distribution** (`qiime2-amplicon`) as your base conda env for 16S/amplicon work — it includes all standard types.
+- Use the **QIIME 2 Tiny Distribution** if you only need the framework (minimal env for new plugin development).
 
-| Plugin | Path | Purpose |
-|--------|------|---------|
-| q2-bridges | `/projects/afodor_research2/ieclabau/privateGit/q2-bridges` | Wraps Kraken2 → QIIME 2; shuffle sequences for negative controls |
-| q2-hashseq | `/projects/afodor_research2/ieclabau/privateGit/q2-hashseq` | Wraps HashSeq R package for 16S ASV inference |
+---
 
-## Gotchas
+## Common Gotchas
 
-- `FeatureTable[Frequency]` returned as `pd.DataFrame` must have **samples as rows**, features as columns. If your tool outputs features as rows, transpose with `df.T`.
-- The QIIME 2 amplicon distribution (`qiime2-amplicon`) includes all the relevant types for 16S analysis. Use that as the base conda env.
-- `citations.bib` key is the string used in `citations['Key']`. Keep keys unique.
-- `JAVA_TOOL_OPTIONS=-Xmx4g` in the environment is the cleanest way to increase JVM heap when calling R packages that use rJava.
+- `FeatureTable[Frequency]` returned as `pd.DataFrame` must have **samples as rows, features as columns**. Transpose with `df.T` if your tool outputs it the other way.
+- `citations.bib` keys must be unique and match exactly what you pass to `citations['Key']`.
+- Construct all QIIME 2 format objects *before* the `with tempfile.TemporaryDirectory()` block exits, or inside it and return them before cleanup — format objects manage their own storage.
+- After modifying `plugin_setup.py` or adding new actions, always run `qiime dev refresh-cache` before testing via the CLI.
+- `JAVA_TOOL_OPTIONS=-Xmx4g` is the cleanest way to cap JVM heap when calling R packages that depend on rJava.
+- The `_methods.py` convention signals that outside code should not import from it directly — you are free to refactor it without breaking downstream users.
+
+---
+
+## Reference Pages
+
+| Topic | File |
+|---|---|
+| Package / repo structure | [references/package-structure.md](references/package-structure.md) |
+| Type system (semantic, primitive, formats) | [references/type-system.md](references/type-system.md) |
+| Registering methods, visualizers, pipelines | [references/action-registration.md](references/action-registration.md) |
+| Testing | [references/testing.md](references/testing.md) |
+| Calling external tools (R, Java, CLI) | [references/external-tools.md](references/external-tools.md) |
+
+---
+
+## Key Official Links
+
+- Developer book: [develop.qiime2.org](https://develop.qiime2.org/en/latest/)
+- Plugin template: [github.com/caporaso-lab/plugin-template](https://github.com/caporaso-lab/plugin-template)
+- Forum (developer): [forum.qiime2.org](https://forum.qiime2.org/c/dev/16)
+- Semantic types reference: [docs.qiime2.org/2024.10/semantic-types](https://docs.qiime2.org/2024.10/semantic-types/)
