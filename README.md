@@ -9,7 +9,14 @@ share-claude-skills
 ├── README.md
 └── skills
     ├── build-q2-pluggins
-    │   └── SKILL.md
+    │   ├── README.md
+    │   ├── SKILL.md
+    │   └── references
+    │       ├── action-registration.md
+    │       ├── external-tools.md
+    │       ├── package-structure.md
+    │       ├── testing.md
+    │       └── type-system.md
     └── when-am-i
         ├── deadlines.md
         ├── references
