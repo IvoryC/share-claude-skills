@@ -6,23 +6,29 @@ This directory is a git-controled directory for skills developed for Claude.
 
 ```
 share-claude-skills
-├── README.md
-└── skills
-    ├── build-q2-pluggins
-    │   ├── README.md
-    │   ├── SKILL.md
-    │   └── references
-    │       ├── action-registration.md
-    │       ├── external-tools.md
-    │       ├── package-structure.md
-    │       ├── testing.md
-    │       └── type-system.md
-    └── when-am-i
-        ├── deadlines.md
-        ├── references
-        │   ├── calendar-context.md
-        │   └── milestones.md
-        └── SKILL.md
+├── .claude
+│   └── skills
+│       └── git-commit-checklist
+│           └── SKILL.md
+├── skills
+│   ├── build-q2-pluggins
+│   │   ├── references
+│   │   │   ├── action-registration.md
+│   │   │   ├── external-tools.md
+│   │   │   ├── package-structure.md
+│   │   │   ├── testing.md
+│   │   │   └── type-system.md
+│   │   ├── README.md
+│   │   └── SKILL.md
+│   └── when-am-i
+│       ├── references
+│       │   ├── calendar-context.md
+│       │   └── milestones.md
+│       ├── deadlines.md
+│       └── SKILL.md
+├── CLAUDE.md
+├── .gitignore
+└── README.md
 ```
 
 ## Use These Skills

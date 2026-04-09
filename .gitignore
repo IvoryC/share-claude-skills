@@ -13,4 +13,5 @@
 *~
 
 # Claude Code runtime files (not part of the plugin definition)
-.claude/
+.claude/*
+!.claude/skills
