@@ -20,6 +20,10 @@ share-claude-skills
 │   │   │   └── type-system.md
 │   │   ├── README.md
 │   │   └── SKILL.md
+│   ├── snakemake
+│   │   ├── references
+│   │   │   └── snakemake-style-guide.rst.txt
+│   │   └── README.md
 │   └── when-am-i
 │       ├── references
 │       │   ├── calendar-context.md
