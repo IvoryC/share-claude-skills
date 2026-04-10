@@ -21,7 +21,7 @@ snakemake \
     --sdm conda \
     --default-resources \
         slurm_account="myaccount" \
-        slurm_partition="Nebula" \
+        slurm_partition="general" \
         mem_mb=8000 \
         runtime=120 \
     --jobs 50 \
@@ -106,7 +106,7 @@ show-failed-logs: true
 retries: 2
 default-resources:
   - slurm_account=myaccount
-  - slurm_partition=Nebula
+  - slurm_partition=general
   - mem_mb=8000
   - runtime=120
   - cpus_per_task=1
@@ -195,7 +195,7 @@ Submit the Snakemake master process itself as a SLURM job:
 #SBATCH --time=48:00:00
 #SBATCH --mem=4G
 #SBATCH --cpus-per-task=1
-#SBATCH --partition=Nebula
+#SBATCH --partition=general
 
 snakemake --profile profiles/slurm --jobs 100
 ```

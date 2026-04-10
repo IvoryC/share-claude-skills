@@ -5,8 +5,9 @@ description: >
   "create a Snakemake workflow", "set up a Snakemake pipeline", "run Snakemake
   on SLURM", "debug a Snakemake error", "use Snakemake wrappers", "use
   checkpoints in Snakemake", "modularize a Snakefile", or mentions working with
-  a Snakefile or .smk files. Also use when the user says "I'm using Snakemake"
-  and asks for help with bioinformatics workflow design.
+  a Snakefile or .smk files. This skill is also appropriate when the user
+  says "I'm using Snakemake" and asks for help with bioinformatics workflow
+  design.
 version: 1.0.0
 user-invocable: true
 allowed-tools: Read, Bash, Glob, Grep, Write, Edit
@@ -140,7 +141,7 @@ snakefmt Snakefile workflow/rules/*.smk     # format (built on Black)
 snakemake --lint                            # built-in linter
 ```
 
-See `→ references/project-structure.md` for catalog submission requirements, CI setup, and snakefmt configuration.
+See `references/project-structure.md` for catalog submission requirements, CI setup, and snakefmt configuration.
 
 ---
 
@@ -223,7 +224,7 @@ resources:
 
 This doubles memory on each retry without manual intervention.
 
-See `→ references/cluster-execution.md` for profiles, job grouping, and latency handling.
+See `references/cluster-execution.md` for profiles, job grouping, and latency handling.
 
 ---
 
@@ -272,6 +273,3 @@ For detailed guidance, read these files as needed:
 | `references/cluster-execution.md` | SLURM v8+ plugin, profiles, resource estimation, adaptive retry |
 | `references/snakemake-style-guide.rst.txt` | Full Nextstrain style guide (source RST) |
 
-## Research Sources
-
-See `README.md` in this skill directory for the full annotated list of documentation sources, third-party style guides, and example pipelines used to build this skill.
