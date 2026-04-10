@@ -22,8 +22,13 @@ share-claude-skills
 │   │   └── SKILL.md
 │   ├── snakemake
 │   │   ├── references
+│   │   │   ├── cluster-execution.md
+│   │   │   ├── config-and-samples.md
+│   │   │   ├── project-structure.md
+│   │   │   ├── rule-patterns.md
 │   │   │   └── snakemake-style-guide.rst.txt
-│   │   └── README.md
+│   │   ├── README.md
+│   │   └── SKILL.md
 │   └── when-am-i
 │       ├── references
 │       │   ├── calendar-context.md
